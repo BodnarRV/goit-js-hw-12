@@ -1,17 +1,23 @@
 import SimpleLightbox from "simplelightbox";
 import "simplelightbox/dist/simple-lightbox.min.css";
 import iziToast from "izitoast";
-import { searchImages } from "./js/pixabay-api";
+import { searchImages, loadMoreImages } from "./js/pixabay-api";
 import { generateGalleryMarkup } from "./js/render-functions";
 
 const searchInput = document.querySelector('input[type=search]');
 const searchBtn = document.querySelector('button[type=submit]');
 const galleryList = document.querySelector('.gallery__list');
+const loadMoreButton = document.querySelector('.gallery button');
+
 let lightbox;
+let page = 1;
+let totalHits = 0;
+let loadedHits = 0;
+let query = '';
 
 searchBtn.addEventListener("click", event => {
   event.preventDefault();
-  const query = searchInput.value;
+  query = searchInput.value;
 
   if (query === '') {
     iziToast.error({
@@ -23,8 +29,13 @@ searchBtn.addEventListener("click", event => {
   }
 
   galleryList.innerHTML = '';
+  page = 1;
+  loadedHits = 0;
   
-  searchImages(query, images => {
+  searchImages(query, page, (images, total) => {
+    totalHits = total;
+    loadedHits += images.length;
+
     const markup = generateGalleryMarkup(images);
     galleryList.innerHTML = markup;
 
@@ -38,5 +49,47 @@ searchBtn.addEventListener("click", event => {
     }
 
     searchInput.value = '';
+
+    if (loadedHits < totalHits) {
+      loadMoreButton.style.display = 'block';
+    } else {
+      loadMoreButton.style.display = 'none';
+      iziToast.info({
+        title: 'Info',
+        message: "We're sorry, but you've reached the end of search results.",
+        position: 'topRight',
+      });
+    }
   });
 });
+
+loadMoreButton.addEventListener("click", event => {
+  event.preventDefault();
+  page += 1;
+
+  loadMoreImages(query, page, (images, total) => { 
+    loadedHits += images.length;
+    const markup = generateGalleryMarkup(images);
+    galleryList.insertAdjacentHTML('beforeend', markup);
+
+    lightbox.refresh();
+    smoothScrollToNewImages()
+    
+    if (loadedHits >= totalHits) {
+      loadMoreButton.style.display = 'none';
+      iziToast.info({
+        title: 'Info',
+        message: "We're sorry, but you've reached the end of search results.",
+        position: 'topRight',
+      });
+    }
+  });
+});
+
+function smoothScrollToNewImages() {
+  const { height: cardHeight } = galleryList.firstElementChild.getBoundingClientRect();
+  window.scrollBy({
+    top: cardHeight * 2,
+    behavior: 'smooth',
+  });
+}
