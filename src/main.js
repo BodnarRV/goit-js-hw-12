@@ -17,7 +17,7 @@ let query = '';
 
 searchBtn.addEventListener("click", event => {
   event.preventDefault();
-  query = searchInput.value;
+  query = searchInput.value.trim();
 
   if (query === '') {
     iziToast.error({
@@ -35,6 +35,16 @@ searchBtn.addEventListener("click", event => {
   searchImages(query, page, (images, total) => {
     totalHits = total;
     loadedHits += images.length;
+
+    if (images.length === 0) {
+      iziToast.info({
+        title: 'Info',
+        message: 'No images found.',
+        position: 'topRight',
+      });
+      loadMoreButton.style.display = 'none';
+      return;
+    }
 
     const markup = generateGalleryMarkup(images);
     galleryList.innerHTML = markup;
@@ -74,7 +84,7 @@ loadMoreButton.addEventListener("click", event => {
 
     lightbox.refresh();
     smoothScrollToNewImages()
-    
+
     if (loadedHits >= totalHits) {
       loadMoreButton.style.display = 'none';
       iziToast.info({
