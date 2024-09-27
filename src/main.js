@@ -4,7 +4,8 @@ import iziToast from "izitoast";
 import { searchImages, loadMoreImages } from "./js/pixabay-api";
 import { generateGalleryMarkup } from "./js/render-functions";
 
-const searchInput = document.querySelector('input[type=search]');
+const searchForm = document.querySelector('#search-form');
+const searchInput = searchForm.querySelector('input[type=search]');
 const searchBtn = document.querySelector('button[type=submit]');
 const galleryList = document.querySelector('.gallery__list');
 const loadMoreButton = document.querySelector('.gallery button');
@@ -15,7 +16,7 @@ let totalHits = 0;
 let loadedHits = 0;
 let query = '';
 
-searchBtn.addEventListener("click", event => {
+searchForm.addEventListener("submit", event => {
   event.preventDefault();
   query = searchInput.value.trim();
 
@@ -31,6 +32,7 @@ searchBtn.addEventListener("click", event => {
   galleryList.innerHTML = '';
   page = 1;
   loadedHits = 0;
+  loadMoreButton.style.display = 'none';
   
   searchImages(query, page, (images, total) => {
     totalHits = total;
